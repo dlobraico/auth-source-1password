@@ -1,0 +1,54 @@
+* auth-source-1password
+
+[[https://www.gnu.org/licenses/gpl-3.0][https://img.shields.io/badge/License-GPL%20v3-blue.svg]]
+
+
+This package provides Emacs [[https://www.gnu.org/software/emacs/manual/html_mono/auth.html#Top][auth-source]] integration for 1Password using [[https://developer.1password.com/docs/cli/secret-references][secret
+references]] and the ~op~ command-line tool. It's handy for use with things like
+smtpmail and other Emacs packages which expect to be able to lookup login
+credentials. It should be a drop-in replacement for the default auth-info
+source.
+
+This package was heavily inspired by [[https://github.com/triplem/auth-source-gopass][auth-source-gopass]]. Like that package, as
+of this writing, each query must resolve to exactly one entry, and there is no
+interactive selection in case of conflicts.
+
+** Installation
+
+   Installation instructions forthcoming.
+
+** Usage
+
+To enable the package, run:
+
+#+BEGIN_SRC elisp
+(auth-source-1password-enable)
+#+END_SRC
+
+** Configuration
+
+This package provides some parameters as well as a function, which can be customized to reflect you personal use-case.
+
+- ~auth-source-1password-vault~
+  (default "Personal")
+  Vault to search for credentials.
+
+- ~auth-source-1password-executable~
+  (default "op")
+  Executable used for ~op~, should point to a valid installation of the
+  1Password CLI.
+
+- ~auth-source-1password-construct-secret-reference~
+  (default 'auth-source-1password--1password-construct-entry-path)
+  Function to construct the secret reference in the 1password store.
+
+  #+BEGIN_SRC elisp
+      (defun auth-source-1password--1password-construct-entry-path (_backend _type host user _port)
+      "Construct the full entry-path for the 1password entry for HOST and USER.
+    Usually starting with the `auth-source-1password-vault', followed
+    by host and user."
+    (mapconcat #'identity (list auth-source-1password-vault host user) "/"))
+  #+END_SRC
+
+  Override this function with your preferred mechanism for organizing passwords
+  in the 1Password vault.
