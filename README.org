@@ -29,18 +29,16 @@ To enable the package, run:
 
 This package provides some parameters as well as a function, which can be customized to reflect you personal use-case.
 
-- ~auth-source-1password-vault~
-  (default "Personal")
-  Vault to search for credentials.
+| variable                                           | default                                                | description                                                                          |
+|----------------------------------------------------+--------------------------------------------------------+--------------------------------------------------------------------------------------|
+| ~auth-source-1password-vault~                      | "Personal"                                             | Vault to search for credentials.                                                     |
+| ~auth-source-1password-executable~                 | "op"                                                   | Executable used for ~op~, should point to a valid installation of the 1Password CLI. |
+| ~auth-source-1password-construct-secret-reference~ | 'auth-source-1password--1password-construct-entry-path | Function to construct the secret reference in the 1password store.                   |
 
-- ~auth-source-1password-executable~
-  (default "op")
-  Executable used for ~op~, should point to a valid installation of the
-  1Password CLI.
-
-- ~auth-source-1password-construct-secret-reference~
-  (default 'auth-source-1password--1password-construct-entry-path)
-  Function to construct the secret reference in the 1password store.
+To customize the organization of secrets in your 1Password store, re-implement
+~auth-source-1password-construct-secret-reference~. The default assumes that
+1Passwords entries are named after the host in question and that passwords are
+stored in a field named after the user:
 
   #+BEGIN_SRC elisp
       (defun auth-source-1password--1password-construct-entry-path (_backend _type host user _port)
@@ -50,5 +48,14 @@ This package provides some parameters as well as a function, which can be custom
     (mapconcat #'identity (list auth-source-1password-vault host user) "/"))
   #+END_SRC
 
-  Override this function with your preferred mechanism for organizing passwords
-  in the 1Password vault.
+In reality, you'll probably end up searching for entries like this:
+
+#+begin_src elisp
+  (auth-source-pick-first-password :host 1password-entry-name :user 1password-field-name)
+#+end_src
+
+e.g.,
+
+#+begin_src elisp
+  (auth-source-pick-first-password :host "Gmail.com" :user "password")
+#+end_src

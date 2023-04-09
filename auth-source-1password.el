@@ -52,11 +52,12 @@ by host and user."
   "Searche 1password for the specified user and host.
 SPEC, BACKEND, TYPE, HOST, USER and PORT are required by auth-source."
   (if (executable-find auth-source-1password-executable)
-      (let ((got-secret (string-trim
-                         (shell-command-to-string
-                          (format "%s read op://%s"
-                                  auth-source-1password-executable
-                                  (shell-quote-argument (funcall auth-source-1password-construct-secret-reference backend type host user port)))))))
+      (let ((got-secret
+             (string-trim
+              (shell-command-to-string
+               (format "%s read op://%s"
+                       auth-source-1password-executable
+                       (shell-quote-argument (funcall auth-source-1password-construct-secret-reference backend type host user port)))))))
         (list (list :user user
                     :secret got-secret)))
     ;; If not executable was found, return nil and show a warning
