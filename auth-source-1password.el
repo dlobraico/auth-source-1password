@@ -26,7 +26,7 @@
   :prefix "1password-")
 
 (defcustom auth-source-1password-vault "Personal"
-  "1Password vault to use when searching for secrets"
+  "1Password vault to use when searching for secrets."
   :type 'string
   :group 'auth-source-1password)
 
