@@ -21,7 +21,7 @@
 
 (defgroup auth-source-1password nil
   "1password auth source settings."
-  :group 'external
+  :group 'auth-source
   :tag "auth-source-1password"
   :prefix "1password-")
 
@@ -72,7 +72,7 @@ SPEC, BACKEND, TYPE, HOST, USER and PORT are required by auth-source."
 (defvar auth-source-1password-backend
   (auth-source-backend
    :source "."
-   :type '1password
+   :type 'password-store
    :search-function #'auth-source-1password-search))
 
 (defun auth-source-1password-backend-parse (entry)
