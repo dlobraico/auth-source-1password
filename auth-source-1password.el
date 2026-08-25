@@ -49,19 +49,46 @@ by host and user."
 (cl-defun auth-source-1password-search (&rest spec
                                            &key backend type host user port
                                            &allow-other-keys)
-  "Searche 1password for the specified user and host.
-SPEC, BACKEND, TYPE, HOST, USER and PORT are required by auth-source."
-  (if (executable-find auth-source-1password-executable)
-      (let ((got-secret
-             (string-trim
-              (shell-command-to-string
-               (format "%s read op://%s"
-                       auth-source-1password-executable
-                       (shell-quote-argument (funcall auth-source-1password-construct-secret-reference backend type host user port)))))))
-        (list (list :user user
-                    :secret got-secret)))
-    ;; If not executable was found, return nil and show a warning
-    (warn "`auth-source-1password': Could not find executable '%s' to query 1password" auth-source-1password-executable)))
+  "Search 1password for the specified user and host.
+SPEC, BACKEND, TYPE, HOST, USER and PORT are required by auth-source.
+
+Return a list holding a single (:user USER :secret SECRET) plist when the
+reference resolves, or nil when the `op' executable is missing, the reference
+is empty, the lookup fails, or no secret is returned.  Returning nil for an
+unresolved reference lets auth-source fall through to the remaining backends
+instead of handing the caller `op's error output as a bogus secret.  On
+failure `op's output is reported through `auth-source-do-debug', so it is
+visible when `auth-source-debug' is enabled and silent otherwise."
+  (let ((executable (executable-find auth-source-1password-executable))
+        (reference (funcall auth-source-1password-construct-secret-reference
+                            backend type host user port)))
+    (cond
+     ((not executable)
+      ;; If no executable was found, return nil and show a warning.
+      (warn "`auth-source-1password': Could not find executable '%s' to query 1password"
+            auth-source-1password-executable))
+     ;; A custom `auth-source-1password-construct-secret-reference' may return
+     ;; nil (or "") to opt out of this query; skip the `op' call and let other
+     ;; backends answer.
+     ((or (null reference) (string= reference "")) nil)
+     (t
+      (let (output status)
+        (with-temp-buffer
+          ;; `call-process' (unlike `shell-command-to-string') hands back the
+          ;; exit status, so we can tell a resolved reference from an `op'
+          ;; error.  stdout and stderr are mixed into this buffer: on success
+          ;; it holds the secret, on failure `op's diagnostics.
+          (setq status (call-process executable nil t nil
+                                     "read" (concat "op://" reference))
+                output (string-trim (buffer-string))))
+        (if (and (eq status 0) (not (string= output "")))
+            (list (list :user user :secret output))
+          ;; Surface the failure only through auth-source's own debug channel
+          ;; so a routine miss (e.g. a host kept elsewhere) stays quiet.
+          (auth-source-do-debug
+           "auth-source-1password: `op read op://%s' failed (status %s): %s"
+           reference status output)
+          nil))))))
 
 ;;;###autoload
 (defun auth-source-1password-enable ()
